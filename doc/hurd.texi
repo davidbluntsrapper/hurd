@@ -3750,10 +3750,15 @@ is not listed and cannot be looked up; the rest of the directory still
 works.
 
 exfatfs sets the volume's VolumeDirty flag before its first write and
-clears it on a clean shutdown (@code{settrans -g}).  As on Linux, a
-volume that was not unmounted cleanly is written all the same: the
-translator says that it may be damaged, and leaves VolumeDirty set until
-@command{fsck.exfat} has checked it.  The translator also says so when
+clears it on a clean shutdown (@code{settrans -g}), unless a store write
+failed or files removed while still open held clusters, so that
+@command{fsck.exfat} checks the volume next time.  As on Linux, a volume
+that was not unmounted cleanly is written all the same: the translator
+says that it may be damaged, and leaves VolumeDirty set until
+@command{fsck.exfat} has checked it.  Run @command{fsck.exfat} on such a
+volume before writing to it if you can: if a crash left two files
+sharing clusters, removing one of them frees clusters the other still
+uses.  The translator also says so when
 the volume records that its medium reported failures.  A volume that the
 translator cannot write safely (a revision or up-case table the
 specification does not allow, two FATs, or a bitmap that marks the
