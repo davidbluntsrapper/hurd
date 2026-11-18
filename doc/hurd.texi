@@ -3750,19 +3750,18 @@ is not listed and cannot be looked up; the rest of the directory still
 works.
 
 exfatfs sets the volume's VolumeDirty flag before its first write and
-clears it on a clean shutdown (@code{settrans -g}).  A volume that was
-not unmounted cleanly is served read-only, because it may be damaged;
-run @command{fsck.exfat} on it, or pass @option{--allow-dirty} to write
-it as it is.  A volume that the translator cannot write safely (a
-revision or up-case table the specification does not allow, two FATs, or
-a bitmap that marks the system clusters free) is also served read-only,
-and @option{--allow-dirty} does not change that.
+clears it on a clean shutdown (@code{settrans -g}).  As on Linux, a
+volume that was not unmounted cleanly is written all the same: the
+translator says that it may be damaged, and leaves VolumeDirty set until
+@command{fsck.exfat} has checked it.  The translator also says so when
+the volume records that its medium reported failures.  A volume that the
+translator cannot write safely (a revision or up-case table the
+specification does not allow, two FATs, or a bitmap that marks the
+system clusters free) is served read-only.
 
 Options, in addition to the standard diskfs options:
 
 @table @code
-@item --allow-dirty
-Write a volume that was not unmounted cleanly.
 @item -U @var{uid}
 @itemx --uid=@var{uid}
 @itemx -G @var{gid}
@@ -3772,7 +3771,9 @@ Owner and group of every file, since exFAT does not store them.
 
 exfatfs does not free clusters that a removed entry of a kind it does not
 know (such as a vendor allocation) names, since they may belong to
-another file.  Those clusters stay allocated.
+another file.  Those clusters stay allocated.  The Linux driver frees
+them, and so frees another file's clusters when such an entry names
+them.
 
 @node Diskfs Library
 @section Diskfs Library
