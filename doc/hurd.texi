@@ -3647,6 +3647,7 @@ workstations, as well.
 * Linux Extended 2 FS::         The popular Linux filesystem format.
 * ISO-9660 CD-ROM FS::          Standard CD-ROM format.
 * FAT FS::                      Basic universal filesystem.
+* exFAT FS::                    Filesystem of SD cards and USB drives.
 * Diskfs Library::              Implementing new filesystem servers.
 @end menu
 
@@ -3731,6 +3732,47 @@ FAT FS is a simplistic filesystem that is easily portable to many
 operating systems.  It is a good filesystem to have on a usb stick,
 because you can share data between operating systems, since most
 operating systems have a FAT FS driver.
+
+@node exFAT FS
+@section exFAT FS
+@pindex exfatfs
+
+exFAT is the filesystem on most SD cards larger than 32 GB and on many
+USB drives.  The exfatfs translator reads and writes it, for example:
+
+@example
+settrans -ac /mnt /hurd/exfatfs /dev/sd1s1
+@end example
+
+Names are UTF-8.  Lookups ignore case, as on other systems.  A name
+longer than 255 bytes in UTF-8 cannot be represented on the Hurd, so it
+is not listed and cannot be looked up; the rest of the directory still
+works.
+
+exfatfs sets the volume's VolumeDirty flag before its first write and
+clears it on a clean shutdown (@code{settrans -g}).  A volume that was
+not unmounted cleanly is served read-only, because it may be damaged;
+run @command{fsck.exfat} on it, or pass @option{--allow-dirty} to write
+it as it is.  A volume that the translator cannot write safely (a
+revision or up-case table the specification does not allow, two FATs, or
+a bitmap that marks the system clusters free) is also served read-only,
+and @option{--allow-dirty} does not change that.
+
+Options, in addition to the standard diskfs options:
+
+@table @code
+@item --allow-dirty
+Write a volume that was not unmounted cleanly.
+@item -U @var{uid}
+@itemx --uid=@var{uid}
+@itemx -G @var{gid}
+@itemx --gid=@var{gid}
+Owner and group of every file, since exFAT does not store them.
+@end table
+
+exfatfs does not free clusters that a removed entry of a kind it does not
+know (such as a vendor allocation) names, since they may belong to
+another file.  Those clusters stay allocated.
 
 @node Diskfs Library
 @section Diskfs Library
